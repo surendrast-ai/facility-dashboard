@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NL North - Facility Management Dashboard</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f8f9fa;
+            color: #1a1a1a;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .header {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .header p {
+            font-size: 14px;
+            color: #666;
+        }
+        .card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .setup-card {
+            background-color: #f0f7ff;
+        }
+        .setup-text {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 1rem;
+        }
+        .url-input-group {
+            display: flex;
+            gap: 8px;
+        }
+        .url-input-group input {
+            flex: 1;
+            padding: 10px 12px;
+            font-size: 13px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: monospace;
+        }
+        .url-input-group button {
+            padding: 10px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .url-input-group button:hover {
+            background-color: #0056b3;
+        }
+        .controls {
+            display: flex;
+            gap: 16px;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .date-control {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .date-control label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #555;
+        }
+        .date-control input {
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            width: 140px;
+        }
+        .refresh-btn {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .refresh-btn:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        .refresh-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .last-updated {
+            font-size: 12px;
+            color: #999;
+            font-style: italic;
+        }
+        .error-card {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 12px;
+            color: #856404;
+            font-size: 14px;
+            margin-bottom: 1rem;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 2rem;
+        }
+        .metric-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .metric-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #999;
+            margin: 8px 0 4px 0;
+            font-weight: 500;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 4px 0;
+            color: #1a1a1a;
+        }
+        .metric-unit {
+            font-size: 11px;
+            color: #bbb;
+            margin-top: 4px;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        thead {
+            border-bottom: 2px solid #e0e0e0;
+        }
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #666;
+        }
+        tbody tr {
+            border-bottom: 1px solid #f0f0f0;
+        }
+        td {
+            padding: 12px;
+            color: #1a1a1a;
+        }
+        .insights-list {
+            margin: 0;
+            padding-left: 20px;
+            color: #555;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function FacilityDashboard() {
+            const [fromDate, setFromDate] = useState('06-Jun-26');
+            const [toDate, setToDate] = useState('14-Jun-26');
+            const [data, setData] = useState(null);
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+            const [scriptUrl, setScriptUrl] = useState('');
+            const [showUrlInput, setShowUrlInput] = useState(!localStorage.getItem('scriptUrl'));
+
+            useEffect(() => {
+                const saved = localStorage.getItem('scriptUrl');
+                if (saved) {
+                    setScriptUrl(saved);
+                    setShowUrlInput(false);
+                }
+            }, []);
+
+            useEffect(() => {
+                if (scriptUrl) {
+                    fetchData();
+                }
+            }, [fromDate, toDate, scriptUrl]);
+
+            const saveScriptUrl = (url) => {
+                localStorage.setItem('scriptUrl', url);
+                setScriptUrl(url);
+                setShowUrlInput(false);
+            };
+
+            const formatDateForSheet = (dateStr) => {
+                const date = new Date(dateStr + 'T00:00:00');
+                return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: '2-digit' });
+            };
+
+            const parseSheetDate = (dateStr) => {
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const parts = dateStr.split('-');
+                const day = parts[0].padStart(2, '0');
+                const month = (months.indexOf(parts[1]) + 1).toString().padStart(2, '0');
+                const year = parseInt(parts[2]) + 2000;
+                return `${year}-${month}-${day}`;
+            };
+
+            const fetchData = async () => {
+                if (!scriptUrl) {
+                    setError('Please enter your Google Apps Script URL first');
+                    return;
+                }
+
+                setLoading(true);
+                setError(null);
+
+                try {
+                    const response = await fetch(scriptUrl, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            fromDate: formatDateForSheet(fromDate),
+                            toDate: formatDateForSheet(toDate)
+                        })
+                    });
+
+                    if (!response.ok) throw new Error('Failed to fetch data');
+
+                    const result = await response.json();
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+                    setData(result);
+                } catch (err) {
+                    setError(err.message);
+                    console.error(err);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const formatNumber = (value) => {
+                if (!value) return '0';
+                if (typeof value !== 'number') return value;
+                return new Intl.NumberFormat('en-IN').format(Math.round(value));
+            };
+
+            const getSummaryStats = () => {
+                if (!data || !data.values) return {};
+                const totalRow = data.values[data.values.length - 1] || [];
+                return {
+                    totalEnergy: totalRow[9] || 0,
+                    totalHSD: totalRow[6] || 0,
+                    totalMeals: totalRow[17] || 0,
+                    totalWater: totalRow[20] || 0,
+                    transportTrips: totalRow[25] || 0,
+                    wellness: totalRow[33] || 0
+                };
+            };
+
+            const stats = getSummaryStats();
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1>⚡ NL North Facility Management</h1>
+                        <p>Real-time dashboard across 15 facilities</p>
+                    </div>
+
+                    {showUrlInput && (
+                        <div className="card setup-card">
+                            <h3 className="card-title">Setup: Connect Google Apps Script</h3>
+                            <p className="setup-text">
+                                After deploying the Google Apps Script, paste your deployment URL here:
+                            </p>
+                            <div className="url-input-group">
+                                <input
+                                    type="text"
+                                    placeholder="https://script.google.com/macros/d/.../usercoderun"
+                                    id="scriptUrlInput"
+                                    defaultValue=""
+                                />
+                                <button onClick={() => {
+                                    const input = document.getElementById('scriptUrlInput');
+                                    if (input.value.trim()) {
+                                        saveScriptUrl(input.value);
+                                    }
+                                }}>Save URL</button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="card">
+                        <div className="controls">
+                            <div className="date-control">
+                                <label>From Date</label>
+                                <input
+                                    type="date"
+                                    value={parseSheetDate(fromDate)}
+                                    onChange={(e) => setFromDate(formatDateForSheet(e.target.value))}
+                                />
+                            </div>
+                            <div className="date-control">
+                                <label>To Date</label>
+                                <input
+                                    type="date"
+                                    value={parseSheetDate(toDate)}
+                                    onChange={(e) => setToDate(formatDateForSheet(e.target.value))}
+                                />
+                            </div>
+                            <button className="refresh-btn" onClick={fetchData} disabled={loading}>
+                                {loading ? '🔄 Loading...' : '🔄 Refresh'}
+                            </button>
+                        </div>
+                        {data && (
+                            <div className="last-updated">
+                                Last updated: {data.lastUpdated}
+                            </div>
+                        )}
+                    </div>
+
+                    {error && (
+                        <div className="error-card">
+                            <strong>Error:</strong> {error}
+                        </div>
+                    )}
+
+                    {loading && (
+                        <div className="loading">
+                            <p>Loading dashboard data...</p>
+                        </div>
+                    )}
+
+                    {data && !loading && (
+                        <>
+                            <div className="metrics-grid">
+                                <div className="metric-card">
+                                    <div className="metric-icon">⚡</div>
+                                    <p className="metric-label">Total Energy</p>
+                                    <p className="metric-value">{formatNumber(stats.totalEnergy)}</p>
+                                    <p className="metric-unit">kWh</p>
+                                </div>
+                                <div className="metric-card">
+                                    <div className="metric-icon">⛽</div>
+                                    <p className="metric-label">Diesel Usage</p>
+                                    <p className="metric-value">{formatNumber(stats.totalHSD)}</p>
+                                    <p className="metric-unit">Liters</p>
+                                </div>
+                                <div className="metric-card">
+                                    <div className="metric-icon">🍽</div>
+                                    <p className="metric-label">Meals Served</p>
+                                    <p className="metric-value">{formatNumber(stats.totalMeals)}</p>
+                                    <p className="metric-unit">Total</p>
+                                </div>
+                                <div className="metric-card">
+                                    <div className="metric-icon">💧</div>
+                                    <p className="metric-label">Water Used</p>
+                                    <p className="metric-value">{formatNumber(stats.totalWater)}</p>
+                                    <p className="metric-unit">KL</p>
+                                </div>
+                                <div className="metric-card">
+                                    <div className="metric-icon">🚌</div>
+                                    <p className="metric-label">Transport Trips</p>
+                                    <p className="metric-value">{formatNumber(stats.transportTrips)}</p>
+                                    <p className="metric-unit">Trips</p>
+                                </div>
+                                <div className="metric-card">
+                                    <div className="metric-icon">🏥</div>
+                                    <p className="metric-label">Wellness Records</p>
+                                    <p className="metric-value">{formatNumber(stats.wellness)}</p>
+                                    <p className="metric-unit">Total</p>
+                                </div>
+                            </div>
+
+                            <div className="card">
+                                <h3 className="card-title">Facility Summary</h3>
+                                <div className="table-wrapper">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Site Name</th>
+                                                <th>Energy (kWh)</th>
+                                                <th>HSD (L)</th>
+                                                <th>Meals</th>
+                                                <th>Water (KL)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {data.values.slice(1, 15).map((row, idx) => (
+                                                row[0] && row[0] !== 'Total' ? (
+                                                    <tr key={idx}>
+                                                        <td>{row[1]}</td>
+                                                        <td>{formatNumber(row[9])}</td>
+                                                        <td>{formatNumber(row[6])}</td>
+                                                        <td>{formatNumber(row[17])}</td>
+                                                        <td>{formatNumber(row[20])}</td>
+                                                    </tr>
+                                                ) : null
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div className="card">
+                                <h3 className="card-title">📊 Quick Insights</h3>
+                                <ul className="insights-list">
+                                    <li>Date range: {fromDate} to {toDate}</li>
+                                    <li>Data source: Synchronized with Google Sheet</li>
+                                    <li>15 facilities monitored across energy, operations, and safety</li>
+                                    <li>Dashboard updates automatically when dates change</li>
+                                </ul>
+                            </div>
+                        </>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<FacilityDashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>
